@@ -1,48 +1,57 @@
 require 'csv'
 
-def newfiles
-	@tempfile = File.new(Time.now.to_s + ".csv", "a")
-	@endfile = File.new(Time.now.to_s + ".csv", "a")
-end
+# create temp files
+@commatemp = File.new("tmp/" + Time.now.to_s + "commatemp.csv", "a")
+@pipetemp = File.new("tmp/" + Time.now.to_s+ "pipetemp.csv", "a")
+@spacetemp = File.new("tmp/" + Time.now.to_s + "spacetemp.csv", "a")
+@tempfiles = [@commatemp, @pipetemp, @spacetemp]
+@organized_file = File.new("endfile.csv", "w+")
 
-def add_headers
-	File.open(@tempfile, 'w+') do |f| 
+# import each data file into a new file with matching header row and correct formatting
+def import_to_csv
+	File.open(@commatemp, 'a') do |f|
 		f.puts("LastName FirstName Gender FavoriteColor DateOfBirth")
+		f << File.open("data/comma.txt").read.gsub(/,/, " ").gsub(/-/, "/") + "\n"
+		puts File.read(f)
+	end
+	File.open(@pipetemp, 'a') do |f|
+		f.puts("LastName FirstName MiddleInitial Gender FavoriteColor DateOfBirth")
+		f << File.open("data/pipe.txt").read.gsub(/\|/, " ").gsub(/-/, "/") + "\n"
+	end
+	File.open(@spacetemp, 'a') do |f|
+		f.puts("LastName FirstName MiddleInitial Gender DateOfBirth FavoriteColor")
+		f << File.open("data/space.txt").read.gsub(/-/, "/") + "\n"
 	end
 end
 
-def import_csv
-	data_files = Dir["data/*"]
-	data_files.each do |d|
-		replace = " "
-		File.open(@tempfile, 'a') do |f|
-			f << File.open(d).read.gsub(/, | \|/, " ").gsub(/-/, "/") + "\n"
-		end
-
-	end
-end
-
-def csv(separator)
-	File.open(@endfile)
-		File.open(@tempfile) do |f|
-			columns = f.readline.chomp.split(separator)
+# convert each new, properly formatted (but separate) csv into a collection of hashes 
+# then process the hashes into a new csv as a single data set in the correct column order
+def process_csv
+	File.open(@organized_file)
+	@organized_file.puts("LastName FirstName Gender DateOfBirth FavoriteColor")
+	@tempfiles.each do |datafile|
+		File.open(datafile) do |f|
+			columns = f.readline.chomp.split(" ")
 			table = []
 			until f.eof?
-				row = f.readline.chomp.split(separator)
+				row = f.readline.chomp.split(" ")
 				row = columns.zip(row).flatten
 				table << Hash[*row]
+				#puts table
 			end
-			File.open(@endfile, 'a') do |e|
-				table.each do |r|
-					newrow = "#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}"
-					e.puts(newrow)
-				end
-				puts "wahooo!"
-				puts File.read(@endfile)
-
+			table.each do |r|
+				newrow = "#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}"
+				@organized_file.puts(newrow)
 			end
 		end
+	end
 end
+
+import_to_csv
+process_csv
+
+
+
 
 # def csv_to_hash
 # 	@people = {}
@@ -72,12 +81,11 @@ end
 
 #COMMA.TXT
 #add appropriate headers to new file
-newfiles
-add_headers
+
 #append content from comma.txt to new file
-import_csv
+
 #convert newfile csv contents to hash, using top row as headers
 #csv_to_hash
 #hash_to_csv(@people)
 #sort_csv
-csv(',')
+
