@@ -28,8 +28,7 @@ begin
 	end
 
 	# convert each new, properly formatted (but separate) csv into a collection of hashes 
-	# then process the hashes into a single data set in the correct column order 
-	# with consistent gender
+	# then process the hashes into a single data set with consistent gender labeling
 	def process_csv
 		@sort_table = []
 		@tempfiles.each do |datafile|
@@ -70,43 +69,34 @@ def gender_fix(row)
 	end
 end
 
-#sort by various critera and write to output.txt
-def output1
+#sort by various critera and write to output.txt using the required column order
+def output
 	File.open(@final_result, "a")
+	#output1
 	@final_result.puts("Output 1:")
 	@sort_table = @sort_table.sort{|a,b| [a['Gender'], a['LastName']] <=> [b['Gender'], b['LastName']]}
 	print_it
-end
 
-def output2
-	File.open(@final_result, "a")
+	#output2
 	@final_result.puts("\nOutput 2:")
-	@sort_table.each do |p|
-		p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y")
-	end
-
+	@sort_table.each {|p| p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y") }
 	@sort_table = @sort_table.sort{|a,b| a['DateOfBirth']<=>b['DateOfBirth']}
-	@sort_table.each do |r|
-		r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")
-	end
+	@sort_table.each {|r| r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")}
 	print_it
-end
 
-def output3
-	File.open(@final_result, "a")
+	#output3
 	@final_result.puts("\nOutput 3:")
 	@sort_table = @sort_table.sort{|a,b| a['LastName']<=>b['LastName']}.reverse
 	print_it
 end
 
 def print_it
-	@sort_table.each do |r|
-		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
+	@sort_table.each do |r| 
+		@final_result.puts(
+		"#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
 	end
 end
 
 import_to_csv
 process_csv
-output1
-output2
-output3
+output
