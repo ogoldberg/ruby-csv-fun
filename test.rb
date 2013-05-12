@@ -13,7 +13,7 @@ def import_to_csv
 	col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
 	File.open(@commatemp, 'a') do |f|
 		f.write("#{col[0]} #{col[1]} #{col[2]} #{col[4]} #{col[3]}\n")
-		f << File.open("data/comma.txt").read.gsub(/, /, " ").gsub(/-/, "/") + "\n"
+		f << File.open("data/comma.txt").read.gsub(/, /, " ") + "\n"
 		puts File.read(f)
 	end
 	File.open(@pipetemp, 'a') do |f|
