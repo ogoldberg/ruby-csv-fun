@@ -8,34 +8,43 @@ require 'tempfile'
 @tempfiles = [@commatemp, @pipetemp, @spacetemp]
 @final_result = File.new("output.txt", "w+")
 
-# import each data file into a temp file with matching header row and correct formatting
-def import_to_csv
-	col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
-	File.open(@commatemp, 'a') do |f|
-		f.write("#{col[0]} #{col[1]} #{col[2]} #{col[4]} #{col[3]}\n")
-		f << File.open("data/comma.txt").read.gsub(/, /, " ") + "\n"
-		puts File.read(f)
-	end
-	File.open(@pipetemp, 'a') do |f|
-		f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[4]} #{col[3]}\n")
-		f << File.open("data/pipe.txt").read.gsub(/ \| /, " ").gsub(/-/, "/") + "\n"
-	end
-	File.open(@spacetemp, 'a') do |f|
-		f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[3]} #{col[4]}\n")
-		f << File.open("data/space.txt").read.gsub(/-/, "/") + "\n"
-	end
-end
-
-# convert each new, properly formatted (but separate) csv into a collection of hashes 
-# then process the hashes into a single data set in the correct column order 
-# with consistent gender
-def process_csv
-	@sort_table = []
-	@tempfiles.each do |datafile|
-		File.open(datafile) do |file|
-			hashify(file)
-			gender_fix(file)
+begin
+	# import each data file into a temp file with matching header row and correct formatting
+	def import_to_csv
+		col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
+		File.open(@commatemp, 'a') do |f|
+			f.write("#{col[0]} #{col[1]} #{col[2]} #{col[4]} #{col[3]}\n")
+			f << File.open("data/comma.txt").read.gsub(/, /, " ") + "\n"
+			puts File.read(f)
 		end
+		File.open(@pipetemp, 'a') do |f|
+			f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[4]} #{col[3]}\n")
+			f << File.open("data/pipe.txt").read.gsub(/ \| /, " ").gsub(/-/, "/") + "\n"
+		end
+		File.open(@spacetemp, 'a') do |f|
+			f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[3]} #{col[4]}\n")
+			f << File.open("data/space.txt").read.gsub(/-/, "/") + "\n"
+		end
+	end
+
+	# convert each new, properly formatted (but separate) csv into a collection of hashes 
+	# then process the hashes into a single data set in the correct column order 
+	# with consistent gender
+	def process_csv
+		@sort_table = []
+		@tempfiles.each do |datafile|
+			File.open(datafile) do |file|
+				hashify(file)
+				gender_fix(file)
+			end
+		end
+	end
+
+ensure
+	#take out the trash
+	@tempfiles.each do |file|
+		file.close
+		file.unlink
 	end
 end
 
@@ -95,7 +104,6 @@ def print_it
 		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
 	end
 end
-
 
 import_to_csv
 process_csv
