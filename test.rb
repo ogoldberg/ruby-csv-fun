@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require 'csv'
 
 # create temp files
@@ -37,11 +38,17 @@ def process_csv
 				row = f.readline.chomp.split(" ")
 				row = columns.zip(row).flatten
 				table << Hash[*row]
-				#puts table
 			end
+			male = {"Gender" => "M"}
+			female = {"Gender" => "F"}
 			table.each do |r|
+				if r["Gender"] == "Male"
+					r.merge!(male)
+				elsif r["Gender"] == "Female"
+					r.merge!(female)
+	 			end
 				newrow = "#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}"
-				@organized_file.puts(newrow)
+ 				@organized_file.puts(newrow)
 			end
 		end
 	end
@@ -49,7 +56,6 @@ end
 
 import_to_csv
 process_csv
-
 
 
 
