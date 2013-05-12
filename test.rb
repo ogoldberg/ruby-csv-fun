@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'csv'
 require 'tempfile'
-
 # create temp files
 @commatemp = Tempfile.new("commatemp")
 @pipetemp = Tempfile.new("pipetemp")
@@ -9,49 +8,21 @@ require 'tempfile'
 @tempfiles = [@commatemp, @pipetemp, @spacetemp]
 @final_result = File.new("output.txt", "w+")
 
-@col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
-
-# import each data file into a new file with matching header row and correct formatting
+# import each data file into a temp file with matching header row and correct formatting
 def import_to_csv
+	col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
 	File.open(@commatemp, 'a') do |f|
-		f.write("#{@col[0]} #{@col[1]} #{@col[2]} #{@col[4]} #{@col[3]}\n")
+		f.write("#{col[0]} #{col[1]} #{col[2]} #{col[4]} #{col[3]}\n")
 		f << File.open("data/comma.txt").read.gsub(/, /, " ").gsub(/-/, "/") + "\n"
 		puts File.read(f)
 	end
 	File.open(@pipetemp, 'a') do |f|
-		f.write("#{@col[0]} #{@col[1]} MiddleInitial #{@col[2]} #{@col[4]} #{@col[3]}\n")
+		f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[4]} #{col[3]}\n")
 		f << File.open("data/pipe.txt").read.gsub(/ \| /, " ").gsub(/-/, "/") + "\n"
 	end
 	File.open(@spacetemp, 'a') do |f|
-		f.write("#{@col[0]} #{@col[1]} MiddleInitial #{@col[2]} #{@col[3]} #{@col[4]}\n")
+		f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[3]} #{col[4]}\n")
 		f << File.open("data/space.txt").read.gsub(/-/, "/") + "\n"
-	end
-end
-
-def gender_fix(row)
-	@sort_table.each do |row|
-		if row["Gender"] == "M"
-			male = {"Gender" => "Male"}
-			row.merge!(male)
-		elsif row["Gender"] == "F"
-			female = {"Gender" => "Female"}
-			row.merge!(female)
-		end
-	end
-end
-
-def hashify(file)
-	columns = file.readline.chomp.split(" ")
-	until file.eof?
-		row = file.readline.chomp.split(" ")
-		row = columns.zip(row).flatten
-		@sort_table << Hash[*row]
-	end
-end
-
-def print_it
-	@sort_table.each do |r|
-		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
 	end
 end
 
@@ -68,6 +39,29 @@ def process_csv
 	end
 end
 
+def hashify(file)
+	columns = file.readline.chomp.split(" ")
+	until file.eof?
+		row = file.readline.chomp.split(" ")
+		row = columns.zip(row).flatten
+		@sort_table << Hash[*row]
+	end
+end
+
+
+def gender_fix(row)
+	@sort_table.each do |row|
+		if row["Gender"] == "M"
+			male = {"Gender" => "Male"}
+			row.merge!(male)
+		elsif row["Gender"] == "F"
+			female = {"Gender" => "Female"}
+			row.merge!(female)
+		end
+	end
+end
+
+#sort by various critera and write to output.txt
 def output1
 	File.open(@final_result, "a")
 	@final_result.puts("Output 1:")
@@ -84,7 +78,7 @@ def output2
 
 	@sort_table = @sort_table.sort{|a,b| a['DateOfBirth']<=>b['DateOfBirth']}
 	@sort_table.each do |r|
-		r['DateOfBirth'] = r['DateOfBirth'].to_s.gsub(/-/,'/')
+		r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")
 	end
 	print_it
 end
@@ -94,6 +88,12 @@ def output3
 	@final_result.puts("\nOutput 3:")
 	@sort_table = @sort_table.sort{|a,b| a['LastName']<=>b['LastName']}.reverse
 	print_it
+end
+
+def print_it
+	@sort_table.each do |r|
+		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
+	end
 end
 
 
