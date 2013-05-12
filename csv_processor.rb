@@ -80,7 +80,7 @@ def output
 	#output2
 	@final_result.puts("\nOutput 2:")
 	@sort_table.each {|p| p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y") }
-	@sort_table = @sort_table.sort{|a,b| a['DateOfBirth']<=>b['DateOfBirth']}
+	@sort_table = @sort_table.sort{|a,b| [a['DateOfBirth'], a['LastName']] <=> [b['DateOfBirth'], b['LastName']]}
 	@sort_table.each {|r| r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")}
 	print_it
 
@@ -88,6 +88,8 @@ def output
 	@final_result.puts("\nOutput 3:")
 	@sort_table = @sort_table.sort{|a,b| a['LastName']<=>b['LastName']}.reverse
 	print_it
+
+	puts "All your data is now processed. Please open output.txt to find your results."
 end
 
 def print_it
