@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 require 'csv'
+require 'tempfile'
 
 # create temp files
-@commatemp = File.new("tmp/" + Time.now.to_s + "commatemp.csv", "a")
-@pipetemp = File.new("tmp/" + Time.now.to_s+ "pipetemp.csv", "a")
-@spacetemp = File.new("tmp/" + Time.now.to_s + "spacetemp.csv", "a")
+@commatemp = Tempfile.new("commatemp")
+@pipetemp = Tempfile.new("pipetemp")
+@spacetemp = Tempfile.new("spacetemp")
 @tempfiles = [@commatemp, @pipetemp, @spacetemp]
-@organized_file = File.new("organized_file.csv", "w+")
 @final_result = File.new("output.txt", "w+")
 
 @col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
@@ -42,44 +42,37 @@ end
 
 def hashify(file)
 	columns = file.readline.chomp.split(" ")
-	@table = []
 	until file.eof?
 		row = file.readline.chomp.split(" ")
 		row = columns.zip(row).flatten
-		@table << Hash[*row]
 		@sort_table << Hash[*row]
 	end
 end
 
+def print_it
+	@sort_table.each do |r|
+		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
+	end
+end
+
 # convert each new, properly formatted (but separate) csv into a collection of hashes 
-# then process the hashes into a new csv as a single data set in the correct column order
+# then process the hashes into a single data set in the correct column order 
+# with consistent gender
 def process_csv
 	@sort_table = []
-	File.open(@organized_file)
-	@col.each do |i|
-		@organized_file.write(i)
-	end
-	@organized_file.write("\n")
 	@tempfiles.each do |datafile|
 		File.open(datafile) do |file|
 			hashify(file)
 			gender_fix(file)
 		end
-		@table.each do |r|
-			@organized_file.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
-		end
 	end
 end
-
-
 
 def output1
 	File.open(@final_result, "a")
 	@final_result.puts("Output 1:")
 	@sort_table = @sort_table.sort{|a,b| [a['Gender'], a['LastName']] <=> [b['Gender'], b['LastName']]}
-	@sort_table.each do |r|
-		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
-	end
+	print_it
 end
 
 def output2
@@ -92,18 +85,17 @@ def output2
 	@sort_table = @sort_table.sort{|a,b| a['DateOfBirth']<=>b['DateOfBirth']}
 	@sort_table.each do |r|
 		r['DateOfBirth'] = r['DateOfBirth'].to_s.gsub(/-/,'/')
-		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
 	end
+	print_it
 end
 
 def output3
 	File.open(@final_result, "a")
 	@final_result.puts("\nOutput 3:")
 	@sort_table = @sort_table.sort{|a,b| a['LastName']<=>b['LastName']}.reverse
-	@sort_table.each do |r|
-		@final_result.puts("#{r['LastName']} #{r['FirstName']} #{r['Gender']} #{r['DateOfBirth']} #{r['FavoriteColor']}\n")
-	end
+	print_it
 end
+
 
 import_to_csv
 process_csv
