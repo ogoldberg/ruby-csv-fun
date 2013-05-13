@@ -69,7 +69,7 @@ def gender_fix(row)
 	end
 end
 
-#sort by various critera and write to output.txt using the required column order
+#sort by various criteria and write to output.txt using the required column order
 def output
 	File.open(@final_result, "a")
 	#output1
@@ -79,6 +79,7 @@ def output
 
 	#output2
 	@final_result.puts("\nOutput 2:")
+	#convert the DateOfBirth string into a Date object, use it to sort, and then convert it back to a string again
 	@sort_table.each {|p| p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y") }
 	@sort_table = @sort_table.sort{|a,b| [a['DateOfBirth'], a['LastName']] <=> [b['DateOfBirth'], b['LastName']]}
 	@sort_table.each {|r| r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")}
