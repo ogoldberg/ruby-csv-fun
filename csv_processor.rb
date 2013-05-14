@@ -1,63 +1,31 @@
 #!/usr/bin/env ruby
 require 'csv'
-require 'tempfile'
-# create temp files
-@commatemp = Tempfile.new("commatemp")
-@pipetemp = Tempfile.new("pipetemp")
-@spacetemp = Tempfile.new("spacetemp")
-@tempfiles = [@commatemp, @pipetemp, @spacetemp]
+
 @final_result = File.new("output.txt", "w+")
 
-begin
-	# import each data file into a temp file with matching header row and correct formatting
-	def import_to_csv
-		col = ["LastName ", "FirstName ", "Gender ", "DateOfBirth ", "FavoriteColor "]
-		File.open(@commatemp, 'a') do |f|
-			f.write("#{col[0]} #{col[1]} #{col[2]} #{col[4]} #{col[3]}\n")
-			f << File.open("data/comma.txt").read.gsub(/, /, " ") + "\n"
-			puts File.read(f)
-		end
-		File.open(@pipetemp, 'a') do |f|
-			f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[4]} #{col[3]}\n")
-			f << File.open("data/pipe.txt").read.gsub(/ \| /, " ").gsub(/-/, "/") + "\n"
-		end
-		File.open(@spacetemp, 'a') do |f|
-			f.write("#{col[0]} #{col[1]} MiddleInitial #{col[2]} #{col[3]} #{col[4]}\n")
-			f << File.open("data/space.txt").read.gsub(/-/, "/") + "\n"
-		end
-	end
+# import each data file directly into one big hash
+def import_data
+	col = ["LastName", "FirstName", "MiddleInitial", "Gender", "DateOfBirth", "FavoriteColor"]
+	
+	@sort_table = []
+	keys = [col[0], col[1], col[3], col[5], col[4]]
+	hashify("data/comma.txt", ", ", keys)
 
-	# convert each new, properly formatted (but separate) csv into a collection of hashes 
-	# then process the hashes into a single data set with consistent gender labeling
-	def process_csv
-		@sort_table = []
-		@tempfiles.each do |datafile|
-			File.open(datafile) do |file|
-				hashify(file)
-				gender_fix(file)
-			end
-		end
-	end
+	keys = [col[0], col[1], col[2], col[3], col[5], col[4]]
+	hashify("data/pipe.txt", " | ", keys)
 
-ensure
-	#take out the trash
-	@tempfiles.each do |file|
-		file.close
-		file.unlink
+	keys = [col[0], col[1], col[2], col[3], col[4], col[5]]
+	hashify("data/space.txt", " ", keys)
+end
+
+def hashify(file, delimiter, keys)
+	temp_array = CSV.read(file, { :col_sep => delimiter}).map {|a| Hash[*keys.zip(a).flatten]}
+	temp_array.each do |p|
+		@sort_table << p
 	end
 end
 
-def hashify(file)
-	columns = file.readline.chomp.split(" ")
-	until file.eof?
-		row = file.readline.chomp.split(" ")
-		row = columns.zip(row).flatten
-		@sort_table << Hash[*row]
-	end
-end
-
-
-def gender_fix(row)
+def clean_data
 	@sort_table.each do |row|
 		if row["Gender"] == "M"
 			male = {"Gender" => "Male"}
@@ -66,10 +34,11 @@ def gender_fix(row)
 			female = {"Gender" => "Female"}
 			row.merge!(female)
 		end
+		row['DateOfBirth'] = row['DateOfBirth'].gsub(/-/, "/")		
 	end
 end
 
-#sort by various criteria and write to output.txt using the required column order
+#sort by user requested criteria and write to output.txt using the desired column order
 def output
 	File.open(@final_result, "a")
 	#output1
@@ -80,7 +49,9 @@ def output
 	#output2
 	@final_result.puts("\nOutput 2:")
 	#convert the DateOfBirth string into a Date object, use it to sort, and then convert it back to a string again
-	@sort_table.each {|p| p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y") }
+	@sort_table.each do |p| 
+		p['DateOfBirth'] = Date.strptime(p['DateOfBirth'], "%m/%d/%Y")
+	end
 	@sort_table = @sort_table.sort{|a,b| [a['DateOfBirth'], a['LastName']] <=> [b['DateOfBirth'], b['LastName']]}
 	@sort_table.each {|r| r['DateOfBirth'] = r['DateOfBirth'].strftime("%-m/%-d/%Y")}
 	print_it
@@ -100,6 +71,6 @@ def print_it
 	end
 end
 
-import_to_csv
-process_csv
+import_data
+clean_data
 output
